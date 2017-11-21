@@ -5,7 +5,7 @@
   Extremely Efficient Procedures for Composite L0 Penalized Estimation(2d).
 }
 \usage{
-  AMIAS2d(Mat, D_type = "fused.2d", composite = FALSE, W_type = "identity",
+  AMIAS2d(Mat, D_type="fused.2d", composite=FALSE, W_type="identity",
   k1=NULL, k2=1, D=NULL, W=NULL, T1=NULL, T2=min(10,nmw[1]-1), rho1=(dim1*dim2)^6, 
   rho2=(dim1*dim2)^6, h=5, tao=1, outer_itermax=20, select_max=min(20,nm[1]-1), 
   eps=0.1, iter_max=10, ...)
@@ -24,15 +24,15 @@
   \item{rho1}{The lagrange operator of the argumented lagrange form for split item in \eqn{D\beta}.}
   \item{rho2}{The lagrange operator of the argumented lagrange form for split item in \eqn{W\beta}.}
   \item{h}{Arguments for \code{\link{my.rollmean}}.}
-  \item{tao}{Number: increment of the T sequence in adative function algorithm.}
-  \item{outer_itermax}{The maximum iterations to select T adatively.}
+  \item{tao}{Number: increment of the \code{T1} sequence in adative function algorithm.}
+  \item{outer_itermax}{The maximum iterations to select \code{T1} adatively.}
   \item{select_max}{The maximum number of change point to detect.}
   \item{eps}{The threshold to stop the adative AMIAS algorithm, when \eqn{MSE} is smaller than \eqn{eps}.}
-  \item{iter_max}{The maximum iterations to setect change point for given T.}
+  \item{iter_max}{The maximum iterations to setect change point for given \code{T1}.}
   \item{\dots}{Other arguments.}
 }
 \details{
-  The Parameter of models implied by T is fit by primal dual active set 
+  The Parameter of models implied by \code{T1} and \code{T2} is fit by primal dual active set 
   and this is the number of change point to detect in AMIAS. Note that the 
   model to fit is \deqn{ \beta_i + \sigma_i,} and the objective function 
   is \deqn{1/2*RSS + \lambda_1*penalty_1 + \lambda_2*penalty_2(\lambda_2 = 0 for 
@@ -59,16 +59,16 @@ A list with class attribute 'AMIAS' and named components:
   \item{W_type}{Specifcation of \eqn{D}, default is  "identity". when W is set, it would be "user".}
   \item{rho1}{The lagrange operator of the argumented lagrange form in \eqn{D\beta} for split item.}
   \item{rho2}{The lagrange operator of the argumented lagrange form in \eqn{W\beta} for split item.}
-  \item{tao}{Number: increment of the T sequence in adative function algorithm.}
+  \item{tao}{Number: increment of the \code{T1} sequence in adative function algorithm.}
   \item{eps}{The threshold to stop the adative AMIAS algorithm, when \code{MSE} is smaller than \code{eps}.}
-  \item{iter}{The iterations to setect change point for given \code{T}}
-  \item{iter_max}{The maximum iterations to setect change point for given \code{T}}
-  \item{outer_itermax}{The maximum iterations to select \code{T} adatively.}
+  \item{iter}{The iterations to setect change point for given \code{T1}}
+  \item{iter_max}{The maximum iterations to setect change point for given \code{T1}}
+  \item{outer_itermax}{The maximum iterations to select \code{T1} adatively.}
   \item{select_max}{The maximum number of change point to detect.}
 }
 
 \references{
-  Wen, C., Zhu, J., Wang, X., and Zhang, A. (2017) L0 trend filtering for piecewise smooth modeling.
+  Wen, C., Zhu, J., Wang, X., and Zhang, A. (2017) \emph{L0 trend filtering for piecewise smooth modeling}, technique report.
 }
 
 \seealso{

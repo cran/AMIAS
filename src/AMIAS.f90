@@ -37,12 +37,12 @@ subroutine fusedl0(n, y, beta, z, u, T, rho, iter, itermax)
 
   implicit none
 
-  real, dimension (:), allocatable :: tempvec,tempDTD
+  real(kind = 8), dimension (:), allocatable :: tempvec,tempDTD
   integer, dimension (:), allocatable :: A,I,ordervec,Alast
 
   logical endmark
   integer n, iter, itermax, j, k, T
-  real y(n), beta(n), z(n-1), u(n-1), rho
+  real(kind = 8) y(n), beta(n), z(n-1), u(n-1), rho
 
   allocate(tempvec(1:n))
   allocate(tempDTD(1:n-1))
@@ -168,13 +168,13 @@ subroutine afusedl0(n, y, beta, z, u, tao, Kmax, L, eps, rho, miter, itermax)
 
   implicit none
 
-  real, dimension (:), allocatable :: tempvec,tempDTD
+  real(kind = 8), dimension (:), allocatable :: tempvec,tempDTD
   integer, dimension (:), allocatable :: A,I,ordervec,Alast
 
   logical endmark
   integer n, iter, itermax, tao, Kmax, L, j, k, T, kk
   integer miter(Kmax)
-  real y(n), beta(n,Kmax), z(n-1), u(n-1), rho, eps
+  real(kind = 8) y(n), beta(n,Kmax), z(n-1), u(n-1), rho, eps
 
   allocate(tempvec(1:n))
   allocate(tempDTD(1:n-1))
@@ -308,13 +308,13 @@ subroutine btfusedl0(n, y, beta, z, u, T, rho, iter, itermax, inv, vec, veck)
 
   implicit none
 
-  real, dimension (:), allocatable :: tempvec
-  real, dimension (:,:), allocatable :: tempDTD,tempATA,tempITI
+  real(kind = 8), dimension (:), allocatable :: tempvec
+  real(kind = 8), dimension (:,:), allocatable :: tempDTD,tempATA,tempITI
   integer, dimension (:), allocatable :: A,I,ordervec,Alast,Asort
 
   logical setequal
   integer n,iter,itermax,j,T,veck
-  real y(n),beta(n),z(n-veck+1),u(n-veck+1),rho,inv(2*veck-1,n-veck+1),vec(veck)
+  real(kind = 8) y(n),beta(n),z(n-veck+1),u(n-veck+1),rho,inv(2*veck-1,n-veck+1),vec(veck)
 
   external DGBSV   ! solve banded linear system (AX=B) function in LAPACK
 
@@ -403,14 +403,14 @@ subroutine batfusedl0(n, y, beta, z, u, tao, Kmax, L, eps, rho, miter, itermax, 
 
   implicit none
 
-  real, dimension (:), allocatable :: tempvec,tempbeta
-  real, dimension (:,:), allocatable :: tempDTD,tempATA,tempITI
+  real(kind = 8), dimension (:), allocatable :: tempvec,tempbeta
+  real(kind = 8), dimension (:,:), allocatable :: tempDTD,tempATA,tempITI
   integer, dimension (:), allocatable :: A,I,ordervec,Alast,Asort
 
   logical setequal
   integer n,iter,itermax,tao,Kmax,L,j,T,k,veck
   integer miter(Kmax)
-  real y(n),beta(n,Kmax),z(n-veck+1),u(n-veck+1),rho,eps,inv(2*veck-1,n-veck+1),vec(veck)
+  real(kind = 8) y(n),beta(n,Kmax),z(n-veck+1),u(n-veck+1),rho,eps,inv(2*veck-1,n-veck+1),vec(veck)
 
   external DGBSV   ! solve banded linear system (AX=B) function in LAPACK
 
@@ -511,13 +511,13 @@ subroutine gfusedl0(n, y, beta, z, u, T, rho, iter, itermax, inv, D, m)
 
   implicit none
 
-  real, dimension (:), allocatable :: tempvec
-  real, dimension (:,:), allocatable :: tempITI,tempATA
+  real(kind = 8), dimension (:), allocatable :: tempvec
+  real(kind = 8), dimension (:,:), allocatable :: tempITI,tempATA
   integer, dimension (:), allocatable :: A,I,ordervec,Alast,Asort
 
   logical setequal
   integer n,iter,itermax,j,T,m
-  real y(n),beta(n),z(m),u(m),rho,inv(m,m),D(m,n)
+  real(kind = 8) y(n),beta(n),z(m),u(m),rho,inv(m,m),D(m,n)
 
   external DGESV   ! solve general linear system (AX=B) function in LAPACK
 
@@ -606,14 +606,14 @@ subroutine agfusedl0(n, y, beta, z, u, tao, Kmax, L, eps, rho, miter, itermax, i
 
   implicit none
 
-  real, dimension (:), allocatable :: tempvec,tempbeta
-  real, dimension (:,:), allocatable :: tempITI,tempATA
+  real(kind = 8), dimension (:), allocatable :: tempvec,tempbeta
+  real(kind = 8), dimension (:,:), allocatable :: tempITI,tempATA
   integer, dimension (:), allocatable :: A,I,ordervec,Alast,Asort
 
   logical setequal
   integer n,iter,itermax,j,T,m,tao,Kmax,L,k
   integer miter(Kmax)
-  real y(n),beta(n,Kmax),z(m),u(m),rho,inv(m,m),D(m,n),eps
+  real(kind = 8) y(n),beta(n,Kmax),z(m),u(m),rho,inv(m,m),D(m,n),eps
 
   external DGESV   ! solve general linear system (AX=B) function in LAPACK
 
@@ -714,13 +714,13 @@ subroutine comggfusedl0(n,y,beta,alpha,u,T,rho,iter,itermax,inv,gamma,v,D,m,invw
 
   implicit none
 
-  real, dimension (:), allocatable :: tempvec,tdu,twv
-  real, dimension (:,:), allocatable :: tempATA,tempITI
+  real(kind = 8), dimension (:), allocatable :: tempvec,tdu,twv
+  real(kind = 8), dimension (:,:), allocatable :: tempATA,tempITI
   integer, dimension (:), allocatable :: A,Aw,I,Iw,ordervec,Alast,Alastw,Asort,Asortw
 
   logical setequal,setequalw
   integer n,iter,itermax,j,T,Tw,m,mw,lm,lmt
-  real y(n),beta(n),alpha(m),gamma(mw),u(m),v(mw),rho,rhow,inv(m,m),invw(mw,mw),D(m,n),W(mw,n)
+  real(kind = 8) y(n),beta(n),alpha(m),gamma(mw),u(m),v(mw),rho,rhow,inv(m,m),invw(mw,mw),D(m,n),W(mw,n)
 
   external DGESV   ! solve general linear system (AX=B) function in LAPACK
 
@@ -877,13 +877,13 @@ subroutine acomggfusedl0(n,y,beta,alpha,u,tao,Kmax,L,eps,rho,miter,itermax,gamma
 
   implicit none
 
-  real, dimension (:), allocatable :: tempvec,tdu,twv,tempbeta
-  real, dimension (:,:), allocatable :: tempATA,tempITI
+  real(kind = 8), dimension (:), allocatable :: tempvec,tdu,twv,tempbeta
+  real(kind = 8), dimension (:,:), allocatable :: tempATA,tempITI
   integer, dimension (:), allocatable :: A,Aw,I,Iw,ordervec,Alast,Alastw,Asort,Asortw
 
   logical setequal,setequalw
   integer n,iter,itermax,j,T,Tw,m,mw,lm,lmt,tao,Kmax,L,miter(Kmax),k
-  real y(n),beta(n,Kmax),alpha(m),gamma(mw),u(m),v(mw),rho,rhow,inv(m,m),invw(mw,mw),D(m,n),W(mw,n),eps
+  real(kind = 8) y(n),beta(n,Kmax),alpha(m),gamma(mw),u(m),v(mw),rho,rhow,inv(m,m),invw(mw,mw),D(m,n),W(mw,n),eps
 
   external DGESV   ! solve general linear system (AX=B) function in LAPACK
 
@@ -1052,12 +1052,12 @@ subroutine comdifusedl0(n,y,beta,alpha,u,T,rho,iter,itermax,gamma,v,Tw,rhow)
 
   implicit none
 
-  real, dimension (:), allocatable :: tempvec,tdu,twv,tempDTD
+  real(kind = 8), dimension (:), allocatable :: tempvec,tdu,twv,tempDTD
   integer, dimension (:), allocatable :: A,Alast,Aw,Alastw,I,Iw,ordervec
 
   logical setequal,setequalw
   integer n,iter,itermax,j,T,Tw,k
-  real y(n),beta(n),alpha(n-1),gamma(n),u(n-1),v(n),rho,rhow
+  real(kind = 8) y(n),beta(n),alpha(n-1),gamma(n),u(n-1),v(n),rho,rhow
 
   allocate(tempvec(1:n))
   allocate(tdu(1:n))
@@ -1230,12 +1230,12 @@ subroutine acomdifusedl0(n,y,beta,alpha,u,tao,Kmax,L,eps,rho,miter,itermax,gamma
 
   implicit none
 
-  real, dimension (:), allocatable :: tempvec,tdu,twv,tempbeta,tempDTD
+  real(kind = 8), dimension (:), allocatable :: tempvec,tdu,twv,tempbeta,tempDTD
   integer, dimension (:), allocatable :: A,Aw,I,Iw,ordervec,Alast,Alastw
 
   logical setequal,setequalw
   integer n,iter,itermax,j,T,Tw,tao,Kmax,L,miter(Kmax),k,kk
-  real y(n),beta(n,Kmax),alpha(n-1),gamma(n),u(n-1),v(n),rho,rhow,eps
+  real(kind = 8) y(n),beta(n,Kmax),alpha(n-1),gamma(n),u(n-1),v(n),rho,rhow,eps
 
   external DGESV   ! solve general linear system (AX=B) function in LAPACK
 
@@ -1421,13 +1421,13 @@ end
 recursive subroutine qSort(a,vec,na)
 
     integer, intent(in) :: nA
-    real, dimension(nA), intent(in out) :: A
+    real(kind = 8), dimension(nA), intent(in out) :: A
     integer, dimension(nA), intent(in out) :: vec
  
     integer :: left, right
-    real :: random
-    real :: pivot
-    real :: temp
+    real(kind = 8) :: random
+    real(kind = 8) :: pivot
+    real(kind = 8) :: temp
     integer :: itemp
     integer :: marker
  
@@ -1473,10 +1473,10 @@ subroutine qsortorder(vec,nvec,ordervec)
 
     implicit none
 
-    real, dimension (:), allocatable :: tempvec
+    real(kind = 8), dimension (:), allocatable :: tempvec
 
     integer, intent(in) :: nvec
-    real, dimension(nvec), intent(in) :: vec
+    real(kind = 8), dimension(nvec), intent(in) :: vec
     integer, dimension(nvec), intent(in out) :: ordervec
 
     allocate(tempvec(1:nvec))
@@ -1493,7 +1493,7 @@ recursive subroutine qSortvec(vec,nvec)
     integer, dimension(nvec), intent(in out) :: vec
  
     integer :: left, right
-    real :: random
+    real(kind = 8) :: random
     integer :: pivot
     integer :: itemp
     integer :: marker
@@ -1539,7 +1539,7 @@ subroutine itergen(rows,ni,tempDTD) ! caculate (D%*%t(D))^-1 in fused.1d by row
 
     integer, intent(in) :: rows
     integer, intent(in) :: ni
-    real, dimension(ni), intent(in out) :: tempDTD
+    real(kind = 8), dimension(ni), intent(in out) :: tempDTD
     integer :: i
 
     if(rows .eq. 1)then
@@ -1568,9 +1568,9 @@ subroutine dymul(vec,n,k,y,resultvec) ! caculate D%*%y in banded case
 
     integer, intent(in) :: k
     integer, intent(in) :: n
-    real, dimension(k), intent(in) :: vec
-    real, dimension(n), intent(in) :: y
-    real, dimension(n-k+1), intent(in out) :: resultvec
+    real(kind = 8), dimension(k), intent(in) :: vec
+    real(kind = 8), dimension(n), intent(in) :: y
+    real(kind = 8), dimension(n-k+1), intent(in out) :: resultvec
     integer :: i
 
     Do i = 1,n-k+1
@@ -1585,9 +1585,9 @@ subroutine sdymul(vec,n,k,y,sel,t,resultvec) ! caculate D%*%y for a select index
     integer, intent(in) :: n
     integer, intent(in) :: t
     integer, dimension(t), intent(in) :: sel
-    real, dimension(k), intent(in) :: vec
-    real, dimension(n), intent(in) :: y
-    real, dimension(n-k+1), intent(in out) :: resultvec
+    real(kind = 8), dimension(k), intent(in) :: vec
+    real(kind = 8), dimension(n), intent(in) :: y
+    real(kind = 8), dimension(n-k+1), intent(in out) :: resultvec
     integer :: i
 
     resultvec = 0
@@ -1601,9 +1601,9 @@ subroutine tdymul(vec,n,k,y,resultvec) ! caculate t(D)%*%y in banded case
 
     integer, intent(in) :: k
     integer, intent(in) :: n
-    real, dimension(k), intent(in) :: vec
-    real, dimension(n-k+1), intent(in) :: y
-    real, dimension(n), intent(in out) :: resultvec
+    real(kind = 8), dimension(k), intent(in) :: vec
+    real(kind = 8), dimension(n-k+1), intent(in) :: y
+    real(kind = 8), dimension(n), intent(in out) :: resultvec
     integer :: i
 
     if(n-k+1>=k)then
@@ -1636,12 +1636,12 @@ subroutine tdymul(vec,n,k,y,resultvec) ! caculate t(D)%*%y in banded case
 end
 subroutine dtdmul(vec,n,k,mat) ! caculate D%*%t(D) and return in a banded form in banded case
 
-    real, dimension (:), allocatable :: doublevec
+    real(kind = 8), dimension (:), allocatable :: doublevec
 
     integer, intent(in) :: k
     integer, intent(in) :: n
-    real, dimension(k), intent(in) :: vec
-    real, dimension(2*k-1,n-k+1), intent(in out) :: mat
+    real(kind = 8), dimension(k), intent(in) :: vec
+    real(kind = 8), dimension(2*k-1,n-k+1), intent(in out) :: mat
     integer :: i
 
     allocate(doublevec(1:(2*k)))
@@ -1668,9 +1668,9 @@ subroutine gtdymul(D,n,m,y,resultvec) ! caculate t(D)%*%y in general case
 
     integer, intent(in) :: m
     integer, intent(in) :: n
-    real, dimension(n), intent(in out) :: resultvec
-    real, dimension(m,n), intent(in) :: D
-    real, dimension(m), intent(in) :: y
+    real(kind = 8), dimension(n), intent(in out) :: resultvec
+    real(kind = 8), dimension(m,n), intent(in) :: D
+    real(kind = 8), dimension(m), intent(in) :: y
     integer :: i
 
     Do i = 1,n
@@ -1683,14 +1683,14 @@ subroutine DTDsub(DTD,sDTD,I,Ilength,Dn,veclen) ! caculate the submatrix of D%*%
 
     implicit none
 
-    integer, dimension (:), allocatable :: tempvec
+    real(kind = 8), dimension (:), allocatable :: tempvec
 
     integer, intent(in) :: veclen
     integer, intent(in) :: Ilength
     integer, intent(in) :: Dn
     integer, dimension(Ilength), intent(in) :: I
-    real, dimension(2*veclen-1,Dn),intent(in) :: DTD
-    real, dimension(2*veclen-1,Ilength), intent(in out) :: sDTD
+    real(kind = 8), dimension(2*veclen-1,Dn),intent(in) :: DTD
+    real(kind = 8), dimension(2*veclen-1,Ilength), intent(in out) :: sDTD
     integer j,k,sm
 
     allocate(tempvec(1:(veclen-1)))
@@ -1766,15 +1766,15 @@ subroutine tfusedl02d(dim1, dim2, y, beta, z, u, T, rho, iter, itermax, inv, vec
 
   implicit none
 
-  real, dimension (:), allocatable :: tempvec
-  real, dimension (:,:), allocatable :: tempDTD,tempATA,tempITI
+  real(kind = 8), dimension (:), allocatable :: tempvec
+  real(kind = 8), dimension (:,:), allocatable :: tempDTD,tempATA,tempITI
   integer, dimension (:), allocatable :: A,I,ordervec,Alast,Asort
 
   logical setequal
   integer dim1,dim2,iter,itermax,j,T,veck, rowlength
-  real y(dim1*dim2),beta(dim1*dim2),z(dim1*(dim2-veck+1)+dim2*(dim1-veck+1)), &
+  real(kind = 8) y(dim1*dim2),beta(dim1*dim2),z(dim1*(dim2-veck+1)+dim2*(dim1-veck+1)), &
   u(dim1*(dim2-veck+1)+dim2*(dim1-veck+1))
-  real rho,inv(dim1*(dim2-veck+1)+dim2*(dim1-veck+1),dim1*(dim2-veck+1)+dim2*(dim1-veck+1)),vec(veck)
+  real(kind = 8) rho,inv(dim1*(dim2-veck+1)+dim2*(dim1-veck+1),dim1*(dim2-veck+1)+dim2*(dim1-veck+1)),vec(veck)
 
   external DGESV   ! solve general linear system (AX=B) function in LAPACK
 
@@ -1869,15 +1869,15 @@ subroutine atfusedl02d(dim1, dim2, y, beta, z, u, tao, Kmax, L, eps, rho, miter,
 
   implicit none
 
-  real, dimension (:), allocatable :: tempvec,tempbeta
-  real, dimension (:,:), allocatable :: tempDTD,tempATA,tempITI
+  real(kind = 8), dimension (:), allocatable :: tempvec,tempbeta
+  real(kind = 8), dimension (:,:), allocatable :: tempDTD,tempATA,tempITI
   integer, dimension (:), allocatable :: A,I,ordervec,Alast,Asort
 
   logical setequal
   integer dim1,dim2,iter,itermax,tao,Kmax,L,j,T,k,veck,rowlength
   integer miter(Kmax)
-  real y(dim1*dim2),beta(dim1*dim2,Kmax),z(dim1*(dim2-veck+1)+dim2*(dim1-veck+1)),u(dim1*(dim2-veck+1)+dim2*(dim1-veck+1))
-  real rho,eps,inv(dim1*(dim2-veck+1)+dim2*(dim1-veck+1),dim1*(dim2-veck+1)+dim2*(dim1-veck+1)),vec(veck)
+  real(kind = 8) y(dim1*dim2),beta(dim1*dim2,Kmax),z(dim1*(dim2-veck+1)+dim2*(dim1-veck+1)),u(dim1*(dim2-veck+1)+dim2*(dim1-veck+1))
+  real(kind = 8) rho,eps,inv(dim1*(dim2-veck+1)+dim2*(dim1-veck+1),dim1*(dim2-veck+1)+dim2*(dim1-veck+1)),vec(veck)
 
   external DGESV   ! solve general linear system (AX=B) function in LAPACK
 
@@ -1982,13 +1982,13 @@ subroutine atfusedl02d(dim1, dim2, y, beta, z, u, tao, Kmax, L, eps, rho, miter,
 end
 subroutine dymul2d(vec,dim1,dim2,k,y,resultvec) ! caculate D%*%y in banded case for 2d
 
-    real, dimension (:), allocatable :: tempvec
+    real(kind = 8), dimension (:), allocatable :: tempvec
     integer, intent(in) :: k
     integer, intent(in) :: dim1
     integer, intent(in) :: dim2
-    real, dimension(k), intent(in) :: vec
-    real, dimension(dim1*dim2), intent(in) :: y
-    real, dimension(dim1*(dim2-k+1)+dim2*(dim1-k+1)), intent(in out) :: resultvec
+    real(kind = 8), dimension(k), intent(in) :: vec
+    real(kind = 8), dimension(dim1*dim2), intent(in) :: y
+    real(kind = 8), dimension(dim1*(dim2-k+1)+dim2*(dim1-k+1)), intent(in out) :: resultvec
     integer :: i
     allocate(tempvec(dim1-k+1))
     tempvec = 0
@@ -2012,9 +2012,9 @@ subroutine sdymul2d(vec,dim1,dim2,k,y,sel,t,resultvec) ! caculate D%*%y with a s
     integer, intent(in) :: dim2
     integer, intent(in) :: t
     integer, dimension(t), intent(in) :: sel
-    real, dimension(k), intent(in) :: vec
-    real, dimension(dim1*dim2), intent(in) :: y
-    real, dimension(dim1*(dim2-k+1)+dim2*(dim1-k+1)), intent(in out) :: resultvec
+    real(kind = 8), dimension(k), intent(in) :: vec
+    real(kind = 8), dimension(dim1*dim2), intent(in) :: y
+    real(kind = 8), dimension(dim1*(dim2-k+1)+dim2*(dim1-k+1)), intent(in out) :: resultvec
     integer :: i
     integer :: j
     integer :: mm
@@ -2039,13 +2039,13 @@ subroutine sdymul2d(vec,dim1,dim2,k,y,sel,t,resultvec) ! caculate D%*%y with a s
 end
 subroutine tdymul2d(vec,dim1,dim2,k,y,resultvec) ! caculate t(D)%*%y in banded case for 2d
 
-    real, dimension (:), allocatable :: tempvec
+    real(kind = 8), dimension (:), allocatable :: tempvec
     integer, intent(in) :: k
     integer, intent(in) :: dim1
     integer, intent(in) :: dim2
-    real, dimension(k), intent(in) :: vec
-    real, dimension(dim1*(dim2-k+1)+dim2*(dim1-k+1)), intent(in) :: y
-    real, dimension(dim1*dim2), intent(in out) :: resultvec
+    real(kind = 8), dimension(k), intent(in) :: vec
+    real(kind = 8), dimension(dim1*(dim2-k+1)+dim2*(dim1-k+1)), intent(in) :: y
+    real(kind = 8), dimension(dim1*dim2), intent(in out) :: resultvec
     integer :: i
     integer :: j
     allocate(tempvec(1:dim1))

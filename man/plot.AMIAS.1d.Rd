@@ -2,13 +2,13 @@
 \alias{plot.AMIAS.1d}
 \title{plot observe data with fitted value for AMIAS model}
 \description{
-  Similar to other plot methods, this functions plot fitted lines with the given sequence from a fitted \code{"AMIAS"} object.
+  Similar to other plot methods, this functions plot fitted lines with the given sequence from a fitted \code{"AMIAS.1d"} object.
 }
 \usage{
-  \method{plot}{AMIAS.1d}(x, s = length(x$df), betatype="l", betacolor="blue", betalwd = 2, ...)
+  \method{plot}{AMIAS.1d}(x, s=length(x$df), betatype="l", betacolor="blue", betalwd=2, ...)
 }
 \arguments{
-  \item{x}{A list with class attribute 'AMIAS'.}
+  \item{x}{A list with class attribute 'AMIAS.1d'.}
   \item{s}{If the AMIAS object contain a T sequence to select adatively, the s-th model would be plot, default is the selected model.}
   \item{betatype}{Character indicating the type of plotting; actually any of the types as in \code{\link[graphics]{plot.default}}.}
   \item{betacolor}{Color of the fitted line.}
