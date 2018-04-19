@@ -1,8 +1,8 @@
 Package: AMIAS
 Type: Package
 Title: Alternating Minimization Induced Active Set Algorithms
-Version: 1.0.1
-Date: 2017-11-19
+Version: 1.0.2
+Date: 2018-4-19
 Author: Canhong Wen, Zelin Hong, Xueqin Wang, Aijun Zhang
 Maintainer: Canhong Wen <wencanhong@gmail.com>
 Depends: utils,zoo,limSolve,Matrix
@@ -10,5 +10,5 @@ Description: An implementation of alternating minimization induced active set (A
 License: LGPL-3
 NeedsCompilation: yes
 Repository: CRAN
-Date/Publication: 2017-11-21 04:45:03 UTC
-Packaged: 2017-11-19 04:21:58 UTC; Administrator
+Date/Publication: 2018-04-19 19:26:44 UTC
+Packaged: 2018-04-19 09:31:45 UTC; Administrator
