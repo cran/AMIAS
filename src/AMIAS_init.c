@@ -18,10 +18,16 @@ void F77_SUB(fusedl0)(
 			double *beta,
 			double *z,
 			double *u,
+      int *A,
+      int *I,
+      int *Anull,
 			int *T,
 			double *rho,
 			int *iter,
-			int *itermax
+			int *itermax,
+			int *adjust,
+			int *adjust_max,
+			int *delta 
 			);
 static R_NativePrimitiveArgType fusedl0_t[] = {
   INTSXP,
@@ -30,7 +36,13 @@ static R_NativePrimitiveArgType fusedl0_t[] = {
   REALSXP,
   REALSXP,
   INTSXP,
+  INTSXP,
+  INTSXP,
+  INTSXP,
   REALSXP,
+  INTSXP,
+  INTSXP,
+  INTSXP,
   INTSXP,
   INTSXP
 };
@@ -46,7 +58,10 @@ void F77_SUB(afusedl0)(
 			double *eps,
 			double *rho,
 			int *miter,
-			int *itermax
+			int *itermax,
+			int *adjust,
+			int *adjust_max,
+			int *delta 
 			);
 static R_NativePrimitiveArgType afusedl0_t[] = {
   INTSXP,
@@ -60,6 +75,9 @@ static R_NativePrimitiveArgType afusedl0_t[] = {
   REALSXP,
   REALSXP,
   INTSXP,
+  INTSXP,
+  INTSXP,
+  INTSXP,
   INTSXP
 };
 void F77_SUB(btfusedl0)(
@@ -68,13 +86,19 @@ void F77_SUB(btfusedl0)(
 			double *beta,
 			double *z,
 			double *u,
+      int *A,
+      int *I,
+      int *Anull,
 			int *T,
 			double *rho,
 			int *iter,
 			int *itermax,
 			double *inv,
 			double *vec,
-			int *veck
+			int *veck,
+			int *adjust,
+			int *adjust_max,
+			int *delta 
 			);
 static R_NativePrimitiveArgType btfusedl0_t[] = {
   INTSXP,
@@ -83,11 +107,17 @@ static R_NativePrimitiveArgType btfusedl0_t[] = {
   REALSXP,
   REALSXP,
   INTSXP,
+  INTSXP,
+  INTSXP,
+  INTSXP,
   REALSXP,
   INTSXP,
   INTSXP,
   REALSXP,
   REALSXP,
+  INTSXP,
+  INTSXP,
+  INTSXP,
   INTSXP
 };
 void F77_SUB(batfusedl0)(
@@ -105,7 +135,10 @@ void F77_SUB(batfusedl0)(
 			int *itermax,
 			double *inv,
 			double *vec,
-			int *veck
+			int *veck,
+			int *adjust,
+			int *adjust_max,
+			int *delta 
 			);
 static R_NativePrimitiveArgType batfusedl0_t[] = {
   INTSXP,
@@ -122,6 +155,9 @@ static R_NativePrimitiveArgType batfusedl0_t[] = {
   INTSXP,
   REALSXP,
   REALSXP,
+  INTSXP,
+  INTSXP,
+  INTSXP,
   INTSXP
 };
 void F77_SUB(gfusedl0)(
@@ -130,13 +166,19 @@ void F77_SUB(gfusedl0)(
 			double *beta,
 			double *z,
 			double *u,
+      int *A,
+      int *I,
+      int *Anull,
 			int *T,
 			double *rho,
 			int *iter,
 			int *itermax,
 			double *inv,
 			double *d,
-			int *m
+			int *m,
+			int *adjust,
+			int *adjust_max,
+			int *delta 
 			);
 static R_NativePrimitiveArgType gfusedl0_t[] = {
   INTSXP,
@@ -145,11 +187,17 @@ static R_NativePrimitiveArgType gfusedl0_t[] = {
   REALSXP,
   REALSXP,
   INTSXP,
+  INTSXP,
+  INTSXP,
+  INTSXP,
   REALSXP,
   INTSXP,
   INTSXP,
   REALSXP,
   REALSXP,
+  INTSXP,
+  INTSXP,
+  INTSXP,
   INTSXP
 };
 void F77_SUB(agfusedl0)(
@@ -167,7 +215,10 @@ void F77_SUB(agfusedl0)(
 			int *itermax,
 			double *inv,
 			double *d,
-			int *m
+			int *m,
+			int *adjust,
+			int *adjust_max,
+			int *delta 
 			);
 static R_NativePrimitiveArgType agfusedl0_t[] = {
   INTSXP,
@@ -184,6 +235,9 @@ static R_NativePrimitiveArgType agfusedl0_t[] = {
   INTSXP,
   REALSXP,
   REALSXP,
+  INTSXP,
+  INTSXP,
+  INTSXP,
   INTSXP
 };
 void F77_SUB(tfusedl02d)(

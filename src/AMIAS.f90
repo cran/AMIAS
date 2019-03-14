@@ -33,37 +33,57 @@
 !         over the data for given parameters.
 !
 !
-subroutine fusedl0(n, y, beta, z, u, T, rho, iter, itermax)
+subroutine fusedl0(n, y, beta, z, u, A, I, Anull, T, rho, iter, itermax, adjust, adjust_max, delta)
 
   implicit none
 
   real(kind = 8), dimension (:), allocatable :: tempvec,tempDTD
-  integer, dimension (:), allocatable :: A,I,ordervec,Alast
-
+  integer, dimension (:), allocatable :: ordervec,Alast
+  
+  integer, intent(in) :: adjust
+  integer, intent(in) :: adjust_max
+  integer, intent(in) :: delta
   logical endmark
-  integer n, iter, itermax, j, k, T
+  integer n, iter, itermax, j, k, T, Anull
   real(kind = 8) y(n), beta(n), z(n-1), u(n-1), rho
+  integer A(T), I(n-1-T)
 
   allocate(tempvec(1:n))
   allocate(tempDTD(1:n-1))
-  allocate(A(1:T))
-  allocate(I(1:n-1-T))
   allocate(ordervec(1:n-1))
   allocate(Alast(1:T))
 
   tempvec = 0
   tempDTD = 0
   Alast = 0
+  ! open(2, file='D:/data1.txt', status='old')
+  if(Anull == 1) then
+      tempvec(1:(n-1)) = y(2:n) - y(1:(n-1))
+      Do j = 1, n-1
+        call itergen(j,n-1,tempDTD(1:n-1))
+        u(j) = dot_product(tempDTD(1:(n-1)),tempvec(1:(n-1)))
+      end do
 
-  Do j = 1,n-1
-    ordervec(j) = j
-  end do
-  call Qsortorder(abs(z + u/rho),n-1,ordervec)
-  A = ordervec(1:T)
-  I = ordervec((T+1):n-1)
-  if( T>1 )then
-    call qSortvec(A,T)
-  end if
+      u(n-1) = dot_product(tempDTD(1:(n-2)),tempvec(1:(n-2)))
+      Do j = 1,n-1
+        ordervec(j) = j
+      end do
+      call Qsortorder(abs(z + u/rho),n-1,ordervec)
+      A = ordervec(1:T)
+      I = ordervec((T+1):n-1)
+  
+      if(adjust == 1 .and. T /= 1) then
+          call adjustA(A, I, abs(z + u/rho), adjust_max, T, delta, n-1)
+      else
+          if( T>1 )then
+              call qSortvec(A,T)
+          end if
+      end if
+  else
+      if( T>1 )then
+          call qSortvec(A,T)
+      end if
+  end if  
 
   iter = 1
   Do while(iter < itermax)
@@ -136,6 +156,14 @@ subroutine fusedl0(n, y, beta, z, u, T, rho, iter, itermax)
     call Qsortorder(abs(z + u/rho),n-1,ordervec)
     A = ordervec(1:T)
     I = ordervec((T+1):n-1)
+
+	if(adjust == 1 .and. T /= 1) then
+        call adjustA(A, I, abs(z + u/rho), adjust_max, T, delta, n-1)
+    else
+        if( T>1 )then
+            call qSortvec(A,T)
+        end if
+    end if
     endmark = .true.
     j = 1
     Do j = 1,T
@@ -152,29 +180,29 @@ subroutine fusedl0(n, y, beta, z, u, T, rho, iter, itermax)
         iter = iter + 1
     end if
 
-    if( T>1 )then
-        call qSortvec(A,T)
-     end if
     Alast = A
 
   end do
-
+  ! close(2)
   beta = tempvec
   iter = iter - 1
-  deallocate(tempvec,tempDTD,A,I,ordervec,Alast)
+  deallocate(tempvec,tempDTD,ordervec,Alast)
   return
 end
-subroutine afusedl0(n, y, beta, z, u, tao, Kmax, L, eps, rho, miter, itermax)
+subroutine afusedl0(n, y, beta, z, u, tao, Kmax, L, eps, rho, miter, itermax, adjust, adjust_max, delta)
 
   implicit none
 
   real(kind = 8), dimension (:), allocatable :: tempvec,tempDTD
   integer, dimension (:), allocatable :: A,I,ordervec,Alast
 
+  integer, intent(in) :: adjust
+  integer, intent(in) :: adjust_max
+  integer, intent(in) :: delta
   logical endmark
   integer n, iter, itermax, tao, Kmax, L, j, k, T, kk
   integer miter(Kmax)
-  real(kind = 8) y(n), beta(n,Kmax), z(n-1), u(n-1), rho, eps
+  real(kind = 8) y(n), beta(n,Kmax), z(n-1, Kmax), u(n-1, Kmax), rho, eps
 
   allocate(tempvec(1:n))
   allocate(tempDTD(1:n-1))
@@ -191,16 +219,33 @@ subroutine afusedl0(n, y, beta, z, u, tao, Kmax, L, eps, rho, miter, itermax)
   Do while(kk < Kmax)
 
     T = tao * kk
-    Do j = 1,n-1
-      ordervec(j) = j
-    end do
-    call Qsortorder(abs(z + u/rho),n-1,ordervec)
-    A(1:T) = ordervec(1:T)
-    I(1:n-1-T) = ordervec((T+1):n-1)
-    if( T>1 )then
-      call qSortvec(A(1:T),T)
+    if(kk == 1) then
+        tempvec(1:(n-1)) = y(2:n) - y(1:(n-1))
+        Do j = 1, n-1
+          call itergen(j,n-1,tempDTD(1:n-1))
+          u(j, kk) = dot_product(tempDTD(1:(n-1)),tempvec(1:(n-1)))
+        end do
+        Do j = 1,n-1
+          ordervec(j) = j
+        end do
+        call Qsortorder(abs(z(:,kk) + u(:,kk)/rho),n-1,ordervec)
     end if
 
+    A(1:T) = ordervec(1:T)
+    I(1:n-1-T) = ordervec((T+1):n-1)
+    if(kk == 1) then
+        if(adjust == 1 .and. T /= 1) then
+            call adjustA(A, I, abs(z(:,kk) + u(:,kk)/rho), adjust_max, T, delta, n-1)
+        else
+            if( T>1 )then
+                call qSortvec(A,T)
+            end if
+        end if
+    else
+        if( T>1 )then
+            call qSortvec(A,T)
+        end if    
+    end if
     iter = 1
     Do while(iter < itermax)
 
@@ -209,25 +254,25 @@ subroutine afusedl0(n, y, beta, z, u, tao, Kmax, L, eps, rho, miter, itermax)
             tempvec(1:(n-2)) = y(3:n) - y(2:(n-1))
             Do j = 1, n-2
                 call itergen(j,n-2,tempDTD(1:n-2))
-                u(j+1) = dot_product(tempDTD(1:(n-2)),tempvec(1:(n-2)))
+                u(j+1,kk) = dot_product(tempDTD(1:(n-2)),tempvec(1:(n-2)))
             end do
         else if(A(1) .eq. n-1)then
             tempvec(1:(n-2)) = y(2:(n-1)) - y(1:(n-2))
             Do j = 1, n-2
                 call itergen(j,n-2,tempDTD(1:n-2))
-                u(j) = dot_product(tempDTD(1:(n-2)),tempvec(1:(n-2)))
+                u(j,kk) = dot_product(tempDTD(1:(n-2)),tempvec(1:(n-2)))
             end do
         else
             tempvec(1:(A(1)-1)) = y(2:A(1)) - y(1:(A(1)-1))
             Do j = 1, A(1)-1
                 call itergen(j,A(1)-1,tempDTD(1:A(1)-1))
-                u(j) = dot_product(tempDTD(1:A(1)-1),tempvec(1:A(1)-1))
+                u(j,kk) = dot_product(tempDTD(1:A(1)-1),tempvec(1:A(1)-1))
             end do
             j = 1
             tempvec(1:(n-1-A(1))) = y(A(1)+2:n) - y(A(1)+1:(n-1))
             Do j = 1, n-1-A(1)
                 call itergen(j,n-1-A(1),tempDTD(1:n-1-A(1)))
-                u(j+A(1)) = dot_product(tempDTD(1:n-1-A(1)),tempvec(1:n-1-A(1)))
+                u(j+A(1),kk) = dot_product(tempDTD(1:n-1-A(1)),tempvec(1:n-1-A(1)))
             end do
         end if
       else
@@ -235,7 +280,7 @@ subroutine afusedl0(n, y, beta, z, u, tao, Kmax, L, eps, rho, miter, itermax)
             tempvec(1:(A(1)-1)) = y(2:A(1)) - y(1:(A(1)-1))
             Do j = 1, A(1)-1
                 call itergen(j,A(1)-1,tempDTD(1:A(1)-1))
-                u(j) = dot_product(tempDTD(1:A(1)-1),tempvec(1:A(1)-1))
+                u(j,kk) = dot_product(tempDTD(1:A(1)-1),tempvec(1:A(1)-1))
             end do
         end if
         Do k = 1,T-1
@@ -244,7 +289,7 @@ subroutine afusedl0(n, y, beta, z, u, tao, Kmax, L, eps, rho, miter, itermax)
                 tempvec(1:(A(k+1)-A(k)-1)) = y(A(k)+2:A(k+1)) - y(A(k)+1:(A(k+1)-1))
                 Do j = 1, A(k+1)-A(k)-1
                     call itergen(j,A(k+1)-A(k)-1,tempDTD(1:A(k+1)-A(k)-1))
-                    u(j+A(k)) = dot_product(tempDTD(1:A(k+1)-A(k)-1),tempvec(1:A(k+1)-A(k)-1))
+                    u(j+A(k),kk) = dot_product(tempDTD(1:A(k+1)-A(k)-1),tempvec(1:A(k+1)-A(k)-1))
                 end do
             end if
         end do
@@ -253,25 +298,33 @@ subroutine afusedl0(n, y, beta, z, u, tao, Kmax, L, eps, rho, miter, itermax)
             tempvec(1:(n-1-A(T))) = y(A(T)+2:n) - y(A(T)+1:(n-1))
             Do j = 1, n-1-A(T)
                 call itergen(j,n-1-A(T),tempDTD(1:n-1-A(T)))
-                u(j+A(T)) = dot_product(tempDTD(1:n-1-A(T)),tempvec(1:n-1-A(T)))
+                u(j+A(T),kk) = dot_product(tempDTD(1:n-1-A(T)),tempvec(1:n-1-A(T)))
             end do
         end if
       end if
-      u(A(1:T)) = 0
-      tempvec(1) = -u(1)
-      tempvec(2:n-1) = u(1:n-2) - u(2:n-1)
-      tempvec(n) = u(n-1)
+      u(A(1:T),kk) = 0
+      tempvec(1) = -u(1,kk)
+      tempvec(2:n-1) = u(1:n-2,kk) - u(2:n-1,kk)
+      tempvec(n) = u(n-1,kk)
       tempvec = y - tempvec
-      z(A(1:T)) = tempvec(A(1:T)+1)-tempvec(A(1:T))
-      z(I(1:n-T-1)) = 0
+      z(A(1:T),kk) = tempvec(A(1:T)+1)-tempvec(A(1:T))
+      z(I(1:n-T-1),kk) = 0
 
       j = 1
       Do j = 1,n-1
         ordervec(j) = j
       end do
-      call Qsortorder(abs(z + u/rho),n-1,ordervec)
+      call Qsortorder(abs(z(:,kk) + u(:,kk)/rho),n-1,ordervec)
       A(1:T) = ordervec(1:T)
       I(1:n-1-T)= ordervec((T+1):n-1)
+      if(adjust == 1 .and. T /= 1) then
+          call adjustA(A, I, abs(z(:,kk) + u(:,kk)/rho), adjust_max, T, delta, n-1)
+      else
+          if( T>1 )then
+              call qSortvec(A,T)
+          end if
+      end if
+	  
       endmark = .true.
       j = 1
       Do j = 1,T
@@ -288,9 +341,6 @@ subroutine afusedl0(n, y, beta, z, u, tao, Kmax, L, eps, rho, miter, itermax)
         iter = iter + 1
       end if
 
-      if( T>1 )then
-        call qSortvec(A(1:T),T)
-      end if
       Alast(1:T) = A(1:T)
     end do
     beta(:,kk) = tempvec
@@ -304,26 +354,29 @@ subroutine afusedl0(n, y, beta, z, u, tao, Kmax, L, eps, rho, miter, itermax)
   deallocate(tempvec,tempDTD,A,I,ordervec,Alast)
   return
 end
-subroutine btfusedl0(n, y, beta, z, u, T, rho, iter, itermax, inv, vec, veck)
+subroutine btfusedl0(n, y, beta, z, u, A, I, Anull, T, rho, iter, itermax, inv, vec, veck, adjust, adjust_max, delta)
 
   implicit none
 
-  real(kind = 8), dimension (:), allocatable :: tempvec
-  real(kind = 8), dimension (:,:), allocatable :: tempDTD,tempATA,tempITI
-  integer, dimension (:), allocatable :: A,I,ordervec,Alast,Asort
+  real(kind = 8), dimension (:), allocatable :: tempvec, tempITI
+  real(kind = 8), dimension (:,:), allocatable :: tempDTD,tempATA
+  integer, dimension (:), allocatable :: ordervec,Alast, Asort
+
+  integer, intent(in) :: adjust
+  integer, intent(in) :: adjust_max
+  integer, intent(in) :: delta
 
   logical setequal
-  integer n,iter,itermax,j,T,veck
+  integer n,iter,itermax,j,T,veck,Anull
   real(kind = 8) y(n),beta(n),z(n-veck+1),u(n-veck+1),rho,inv(2*veck-1,n-veck+1),vec(veck)
+  integer A(T),I(n-veck+1)
 
   external DGBSV   ! solve banded linear system (AX=B) function in LAPACK
 
   allocate(tempvec(1:n-veck+1))
-  allocate(tempDTD(1:2*veck-1,1:n-veck+1-T))
-  allocate(tempATA(1:3*veck-2,1:n-veck+1-T))
-  allocate(tempITI(1:n-veck+1-T,1:n-veck+1-T))
-  allocate(A(1:T))
-  allocate(I(1:n-veck+1-T))
+  allocate(tempDTD(1:2*veck-1,1:n-veck+1))
+  allocate(tempATA(1:3*veck-2,1:n-veck+1))
+  allocate(tempITI(1:n-veck+1))
   allocate(ordervec(1:n-veck+1))
   allocate(Alast(1:T))
   allocate(Asort(1:T))
@@ -331,34 +384,55 @@ subroutine btfusedl0(n, y, beta, z, u, T, rho, iter, itermax, inv, vec, veck)
   tempDTD = 0
   tempITI = 0
   Alast = 0
+  Asort = 0
   tempvec = 0
   call dymul(vec,n,veck,y,tempvec)
-  z = tempvec
+  !open(2, file='D:/data1.txt', status='old')
 
-  Do j = 1,n-veck+1
-    ordervec(j) = j
-  end do
-  call Qsortorder(abs(z + u/rho),n-veck+1,ordervec)
-  A = ordervec(1:T)
-  I = ordervec((T+1):n-veck+1)
+  if(Anull == 1) then
+      call DTDsub(inv,tempDTD,I(1:n-veck+1),n-veck+1,n-veck+1,veck)
+      tempATA = 0
+      tempATA(veck:(3*veck-2),:) = tempDTD
+
+      tempITI(1:n-veck+1) = tempvec
+      call DGBSV(n-veck+1,veck-1,veck-1,1,tempATA,3*veck-2,ordervec(1:n-veck+1-T),tempITI,n-veck+1,j)
+      u= tempITI
+      Do j = 1,n-veck+1
+          ordervec(j) = j
+      end do
+      call Qsortorder(abs(z + u/rho),n-veck+1,ordervec)
+      A = ordervec(1:T)
+      I(1:n-veck+1-T) = ordervec((T+1):n-veck+1)
+
+      if(adjust == 1 .and. T /= 1) then
+          call adjustA(A, I(1:n-veck+1-T), abs(z + u/rho), adjust_max, T, delta, n-veck+1)
+      else
+          if( T>1 )then
+              call qSortvec(A,T)
+          end if
+      end if 
+  else
+      if( T>1 )then
+          call qSortvec(A,T)
+      end if
+  end if
 
   iter = 1
-  Do while(iter < itermax)
 
+  Do while(iter < itermax)
     if(n-veck+1-T .eq. 1)then
         u(I(1)) = tempvec(I(1))/inv(veck,1)
     else
-        tempITI = 0
-        j = 1
-        DO j = 1,n-veck+1-T
-            tempITI(j,j) = 1
-        END DO
         call qSortvec(I(1:n-veck+1-T),n-veck+1-T)
-        call DTDsub(inv,tempDTD,I(1:n-veck+1-T),n-veck+1-T,n-veck+1,veck)
+        call DTDsub(inv,tempDTD(:,1:n-veck+1-T),I(1:n-veck+1-T),n-veck+1-T,n-veck+1,veck)
         tempATA = 0
-        tempATA(veck:(3*veck-2),:)=tempDTD
-        call DGBSV(n-veck+1-T,veck-1,veck-1,n-veck+1-T,tempATA,3*veck-2,ordervec(1:n-veck+1-T),tempITI,n-veck+1-T,j)
-        u(I(1:(n-veck+1-T))) = matmul(tempITI,tempvec(I(1:(n-veck+1-T))))
+        tempATA(veck:(3*veck-2),1:n-veck+1-T) = tempDTD(:,1:n-veck+1-T)
+
+        tempITI(1:n-veck+1-T) = tempvec(I(1:(n-veck+1-T)))
+        call DGBSV(n-veck+1-T,veck-1,veck-1,1,tempATA(:,1:n-veck+1-T),3*veck-2,ordervec(1:n-veck+1-T),tempITI,n-veck+1-T,j)
+        u(I(1:(n-veck+1-T))) = tempITI(1:n-veck+1-T)
+
+        !write(2, *) u(I(1:(n-veck+1-T)))
     end if
 	
     u(A(1:T)) = 0
@@ -372,55 +446,66 @@ subroutine btfusedl0(n, y, beta, z, u, T, rho, iter, itermax, inv, vec, veck)
     end do
     call Qsortorder(abs(z + u/rho),n-veck+1,ordervec)
     A = ordervec(1:T)
-    Asort = A
-    I = ordervec((T+1):n-veck+1)
+    I(1:n-veck+1-T) = ordervec((T+1):n-veck+1)
 
-    if(T>1)call qSortvec(Asort(1:T),T)
+    if(adjust == 1 .and. T /= 1) then
+        call adjustA(A, I(1:n-veck+1-T), abs(z + u/rho), adjust_max, T, delta, n-veck+1)
+    else
+        if( T>1 )then
+            call qSortvec(A,T)
+        end if  
+    end if
+    
+
     setequal = .TRUE.
     j = 1
     Do j = 1,T
-        if(Asort(j) .NE. Alast(j))then
+        if(A(j) .NE. Alast(j))then
             setequal = .FALSE.
             EXIT
         end if
     end do
-
     if(setequal)then
         iter = iter + 1
         EXIT
     else
-        Alast = Asort
+        Alast = A
         iter = iter + 1
     end if
-
+    
   end do
-
   iter = iter - 1
-  deallocate(tempvec,tempDTD,tempATA,tempITI,A,I,ordervec,Alast,Asort)
+
+  deallocate(tempvec,tempDTD,tempATA,tempITI,Alast,Asort,ordervec)
+  !close(2)
   return
 end
-subroutine batfusedl0(n, y, beta, z, u, tao, Kmax, L, eps, rho, miter, itermax, inv, vec, veck)
+subroutine batfusedl0(n, y, beta, z, u, tao, Kmax, L, eps, rho, miter, itermax, inv, vec, veck, adjust, adjust_max, delta)
 
   implicit none
 
-  real(kind = 8), dimension (:), allocatable :: tempvec,tempbeta
-  real(kind = 8), dimension (:,:), allocatable :: tempDTD,tempATA,tempITI
+  real(kind = 8), dimension (:), allocatable :: tempvec,tempbeta,tempITI
+  real(kind = 8), dimension (:,:), allocatable :: tempDTD,tempATA
   integer, dimension (:), allocatable :: A,I,ordervec,Alast,Asort
+
+  integer, intent(in) :: adjust
+  integer, intent(in) :: adjust_max
+  integer, intent(in) :: delta
 
   logical setequal
   integer n,iter,itermax,tao,Kmax,L,j,T,k,veck
   integer miter(Kmax)
-  real(kind = 8) y(n),beta(n,Kmax),z(n-veck+1),u(n-veck+1),rho,eps,inv(2*veck-1,n-veck+1),vec(veck)
+  real(kind = 8) y(n),beta(n,Kmax),z(n-veck+1,Kmax),u(n-veck+1,Kmax),rho,eps,inv(2*veck-1,n-veck+1),vec(veck)
 
   external DGBSV   ! solve banded linear system (AX=B) function in LAPACK
 
   allocate(tempvec(1:n-veck+1))
   allocate(tempbeta(1:n))
-  allocate(tempDTD(1:2*veck-1,1:n-veck))
-  allocate(tempATA(1:3*veck-2,1:n-veck))
-  allocate(tempITI(1:n-veck,1:n-veck))
+  allocate(tempDTD(1:2*veck-1,1:n-veck+1))
+  allocate(tempATA(1:3*veck-2,1:n-veck+1))
+  allocate(tempITI(1:n-veck+1))
   allocate(A(1:L))
-  allocate(I(1:n-veck))
+  allocate(I(1:n-veck+1))
   allocate(ordervec(1:n-veck+1))
   allocate(Alast(1:L))
   allocate(Asort(1:L))
@@ -430,55 +515,85 @@ subroutine batfusedl0(n, y, beta, z, u, tao, Kmax, L, eps, rho, miter, itermax, 
   tempvec = 0
   tempbeta = 0
   call dymul(vec,n,veck,y,tempvec)
-  z = tempvec
-
+  z = 0
   k = 1
+  !open(2, file='D:/data1.txt', status='old')
   Do while( k<Kmax )
 
     T = tao*k
     j = 1
-    Do j = 1,n-veck+1
-      ordervec(j) = j
-    end do
-    call Qsortorder(abs(z + u/rho),n-veck+1,ordervec)
-    A(1:T) = ordervec(1:T)
-    I(1:n-veck-T+1) = ordervec((T+1):n-veck+1)
+    if(k == 1) then
+        Do j = 1,n-veck+1
+          I(j) = j
+        end do
+        call DTDsub(inv,tempDTD,I(1:n-veck+1),n-veck+1,n-veck+1,veck)
+        tempATA = 0
+        tempATA(veck:(3*veck-2),:) = tempDTD
 
+        tempITI(1:n-veck+1) = tempvec
+        call DGBSV(n-veck+1,veck-1,veck-1,1,tempATA,3*veck-2,ordervec(1:n-veck+1),tempITI,n-veck+1,j)
+        u(:,k)= tempITI
+        Do j = 1,n-veck+1
+          ordervec(j) = j
+        end do
+        call Qsortorder(abs(z(:,k) + u(:,k)/rho),n-veck+1,ordervec)
+    end if
+    A(1:T) = ordervec(1:T)
+    !write(2, *) A(1:T)
+    I(1:n-veck-T+1) = ordervec((T+1):n-veck+1)
+    if(k == 1) then
+        if(adjust == 1 .and. T /= 1) then
+            call adjustA(A, I, abs(z(:,k) + u(:,k)/rho), adjust_max, T, delta, n-veck+1)
+        else
+            if( T>1 )then
+                call qSortvec(A,T)
+            end if
+        end if 
+    else
+        if( T>1 )then
+            call qSortvec(A,T)
+        end if
+    end if
+	
     iter = 1
     Do while(iter < itermax)
 
-        if(n-veck+1-T .eq. 1)then
-        u(I(1)) = tempvec(I(1))/inv(veck,1)
+      if(n-veck+1-T .eq. 1)then
+        u(I(1),k) = tempvec(I(1))/inv(veck,1)
       else
         tempITI = 0
         j = 1
-        DO j = 1, n-veck+1-T
-            tempITI(j,j) = 1
-        END DO
         call qSortvec(I(1:n-veck+1-T),n-veck+1-T)
         call DTDsub(inv,tempDTD(1:2*veck-1,1:n-veck+1-T),I(1:n-veck+1-T),n-veck+1-T,n-veck+1,veck)
         tempATA = 0
         tempATA(veck:(3*veck-2),1:n-veck+1-T)=tempDTD(1:2*veck-1,1:n-veck+1-T)
-        call DGBSV(n-veck+1-T,veck-1,veck-1,n-veck+1-T,tempATA(:,1:n-veck+1-T),3*veck-2,ordervec(1:n-veck+1-T), &
-        tempITI(1:n-veck+1-T,1:n-veck+1-T),n-veck+1-T,j)
-        u(I(1:(n-veck+1-T))) = matmul(tempITI(1:n-veck+1-T,1:n-veck+1-T),tempvec(I(1:(n-veck+1-T))))
+        tempITI(1:n-veck+1-T) = tempvec(I(1:(n-veck+1-T)))
+        call DGBSV(n-veck+1-T,veck-1,veck-1,1,tempATA(:,1:n-veck+1-T),3*veck-2,ordervec(1:n-veck+1-T), &
+        tempITI(1:n-veck+1-T),n-veck+1-T,j)
+        u(I(1:(n-veck+1-T)),k) = tempITI(1:n-veck+1-T)
       end if
 
-      u(A(1:T)) = 0
-      call tdymul(vec,n,veck,u,tempbeta)
+      u(A(1:T),k) = 0
+      call tdymul(vec,n,veck,u(:,k),tempbeta)
       tempbeta = y - tempbeta
-      call sdymul(vec,n,veck,tempbeta,A(1:T),T,z)
+      call sdymul(vec,n,veck,tempbeta,A(1:T),T,z(:,k))
 
       j = 1
       Do j = 1,n-veck+1
           ordervec(j) = j
       end do
-      call Qsortorder(abs(z + u/rho),n-veck+1,ordervec)
+      call Qsortorder(abs(z(:,k) + u(:,k)/rho),n-veck+1,ordervec)
       A(1:T) = ordervec(1:T)
       Asort(1:T) = A(1:T)
       I(1:n-veck+1-T) = ordervec((T+1):n-veck+1)
-
-      if(T>1)call qSortvec(Asort(1:T),T)
+      if(adjust == 1 .and. T /= 1) then
+          call adjustA(Asort, I, abs(z(:,k) + u(:,k)/rho), adjust_max, T, delta, n-veck+1)
+          A = Asort
+      else
+          if( T>1 )then
+              call qSortvec(Asort,T)
+          end if
+      end if 
       setequal = .TRUE.
       j = 1
       Do j = 1,T
@@ -504,60 +619,79 @@ subroutine batfusedl0(n, y, beta, z, u, tao, Kmax, L, eps, rho, miter, itermax, 
     End do
 
   Kmax = k-1
+  !close(2)
   deallocate(tempvec,tempbeta,tempDTD,tempATA,tempITI,A,I,ordervec,Alast,Asort)
   return
 end
-subroutine gfusedl0(n, y, beta, z, u, T, rho, iter, itermax, inv, D, m)
+subroutine gfusedl0(n, y, beta, z, u, A, I, Anull, T, rho, iter, itermax, inv, D, m, adjust, adjust_max, delta)
 
   implicit none
 
-  real(kind = 8), dimension (:), allocatable :: tempvec
-  real(kind = 8), dimension (:,:), allocatable :: tempITI,tempATA
-  integer, dimension (:), allocatable :: A,I,ordervec,Alast,Asort
+  real(kind = 8), dimension (:), allocatable :: tempvec, tempITI
+  real(kind = 8), dimension (:,:), allocatable :: tempATA
+  integer, dimension (:), allocatable :: ordervec,Alast,Asort
 
+  integer, intent(in) :: adjust
+  integer, intent(in) :: adjust_max
+  integer, intent(in) :: delta
+  
   logical setequal
-  integer n,iter,itermax,j,T,m
+  integer n,iter,itermax,j,T,m,Anull
   real(kind = 8) y(n),beta(n),z(m),u(m),rho,inv(m,m),D(m,n)
+  integer A(T), I(m-T)
 
   external DGESV   ! solve general linear system (AX=B) function in LAPACK
 
   allocate(tempvec(1:m))
-  allocate(tempITI(1:m-T,1:m-T))
-  allocate(tempATA(1:m-T,1:m-T))
-  allocate(A(1:T))
-  allocate(I(1:m-T))
+  allocate(tempITI(1:m))
+  allocate(tempATA(1:m,1:m))
   allocate(ordervec(1:m))
   allocate(Alast(1:T))
   allocate(Asort(1:T))
 
-  tempITI = 0
   tempATA = 0
   Alast = 0
   tempvec = 0
   tempvec = matmul(D,y)
-  z = tempvec
+  !open(2, file='D:/data2.txt', status='old')
 
-  Do j = 1,m
-    ordervec(j) = j
-  end do
-  call Qsortorder(abs(z + u/rho),m,ordervec)
-  A = ordervec(1:T)
-  I = ordervec((T+1):m)
+  if(Anull == 1) then
+      tempITI(1:m) = tempvec(1:m)
+      tempATA = inv
+      !call DGBSV(m,3,3,1,tempATA,m,ordervec,tempITI,m,j)
+      call DGESV(m,1,tempATA,m,ordervec,tempITI,m,j)
+      u = tempITI(1:m)
+      Do j = 1,m
+        ordervec(j) = j
+      end do
+      call Qsortorder(abs(z + u/rho),m,ordervec)
+      A = ordervec(1:T)
+      I = ordervec((T+1):m)
+      if(adjust == 1 .and. T /= 1) then
+          call adjustA(A, I, abs(z + u/rho), adjust_max, T, delta, m)
+      else
+          if( T>1 )then
+              call qSortvec(A,T)
+          end if
+      end if 
+  else
+      if( T>1 )then
+          call qSortvec(A,T)
+      end if  
+  end if
 
   iter = 1
   Do while(iter < itermax)
-
     if(m-T .eq. 1)then
         u(I(1)) = tempvec(I(1))/inv(I(1),I(1))
     else
-        tempITI = 0
         j = 1
-        DO j = 1,m-T
-            tempITI(j,j) = 1
-        END DO
+        tempITI(1:m-T) = tempvec(I(1:(m-T)))
         tempATA(1:m-T,1:m-T) = inv(I(1:m-T),I(1:m-T))
-        call DGESV(m-T,m-T,tempATA(1:m-T,1:m-T),m-T,ordervec(1:m-T),tempITI,m-T,j)
-        u(I(1:(m-T))) = matmul(tempITI,tempvec(I(1:(m-T))))
+        !call DGBSV(m-T,3,3,1,tempATA(1:m-T,1:m-T),m-T,ordervec(1:m-T),tempITI,m-T,j)
+        call DGESV(m-T,1,tempATA(1:m-T,1:m-T),m-T,ordervec(1:m-T),tempITI(1:m-T),m-T,j)
+        u(I(1:(m-T))) = tempITI(1:m-T)
+        !write(2, *) u
     end if
     u(A(1:T)) = 0
     call gtdymul(D,n,m,u,beta)
@@ -577,7 +711,14 @@ subroutine gfusedl0(n, y, beta, z, u, T, rho, iter, itermax, inv, D, m)
     A = ordervec(1:T)
     Asort = A
     I = ordervec((T+1):m)
-
+    if(adjust == 1 .and. T /= 1) then
+        call adjustA(Asort, I, abs(z + u/rho), adjust_max, T, delta, m)
+        A = Asort
+    else
+        if( T>1 )then
+            call qSortvec(Asort,T)
+        end if
+    end if 
     if(T>1)call qSortvec(Asort(1:T),T)
     setequal = .TRUE.
     j = 1
@@ -597,30 +738,34 @@ subroutine gfusedl0(n, y, beta, z, u, T, rho, iter, itermax, inv, D, m)
     end if
 
   end do
-
+  !close(2)
   iter = iter - 1
-  deallocate(tempvec,tempITI,tempATA,A,I,ordervec,Alast,Asort)
+  deallocate(tempvec,tempITI,tempATA,ordervec,Alast,Asort)
   return
 end
-subroutine agfusedl0(n, y, beta, z, u, tao, Kmax, L, eps, rho, miter, itermax, inv, D, m)
+subroutine agfusedl0(n, y, beta, z, u, tao, Kmax, L, eps, rho, miter, itermax, inv, D, m, adjust, adjust_max, delta)
 
   implicit none
 
-  real(kind = 8), dimension (:), allocatable :: tempvec,tempbeta
-  real(kind = 8), dimension (:,:), allocatable :: tempITI,tempATA
+  real(kind = 8), dimension (:), allocatable :: tempvec,tempbeta,tempITI
+  real(kind = 8), dimension (:,:), allocatable :: tempATA
   integer, dimension (:), allocatable :: A,I,ordervec,Alast,Asort
 
+  integer, intent(in) :: adjust
+  integer, intent(in) :: adjust_max
+  integer, intent(in) :: delta
+  
   logical setequal
   integer n,iter,itermax,j,T,m,tao,Kmax,L,k
   integer miter(Kmax)
-  real(kind = 8) y(n),beta(n,Kmax),z(m),u(m),rho,inv(m,m),D(m,n),eps
+  real(kind = 8) y(n),beta(n,Kmax),z(m,Kmax),u(m,Kmax),rho,inv(m,m),D(m,n),eps
 
   external DGESV   ! solve general linear system (AX=B) function in LAPACK
 
   allocate(tempvec(1:m))
   allocate(tempbeta(1:n))
   allocate(tempATA(1:m,1:m))
-  allocate(tempITI(1:m,1:m))
+  allocate(tempITI(1:m))
   allocate(A(1:L))
   allocate(I(1:m))
   allocate(ordervec(1:m))
@@ -633,54 +778,77 @@ subroutine agfusedl0(n, y, beta, z, u, tao, Kmax, L, eps, rho, miter, itermax, i
   Alast = 0
   tempvec = 0
   tempvec = matmul(D,y)
-  z = tempvec
-
+  z = 0
+  !open(2, file='D:/data1.txt', status='old')
   k = 1
   Do while(k < Kmax)
 
     T=tao*k
-    Do j = 1,m
-      ordervec(j) = j
-    end do
-    call Qsortorder(abs(z + u/rho),m,ordervec)
+    if(k == 1) then
+		tempITI(1:m) = tempvec(1:m)
+        tempATA = inv
+        call DGESV(m,1,tempATA,m,ordervec,tempITI,m,j)
+		u(:,k)= tempITI
+        Do j = 1,m
+          ordervec(j) = j
+        end do
+        call Qsortorder(abs(z(:,k) + u(:,k)/rho),m,ordervec)
+    end if
     A(1:T) = ordervec(1:T)
     I(1:m-T) = ordervec((T+1):m)
-
+	!write(2,*) A(1:T)
+    if(k == 1) then
+        if(adjust == 1 .and. T /= 1) then
+            call adjustA(A, I, abs(z(:,k) + u(:,k)/rho), adjust_max, T, delta, m)
+        else
+            if( T>1 )then
+                call qSortvec(A,T)
+            end if
+        end if 
+    else
+        if( T>1 )then
+            call qSortvec(A,T)
+        end if
+    end if
     iter = 1
     Do while(iter < itermax)
 
       if(m-T .eq. 1)then
-        u(I(1)) = tempvec(I(1))/inv(I(1),I(1))
+        u(I(1),k) = tempvec(I(1))/inv(I(1),I(1))
       else
-        tempITI = 0
-        j = 1
-        DO j = 1,m-T
-            tempITI(j,j) = 1
-        END DO
+	    j = 1
         tempATA(1:m-T,1:m-T) = inv(I(1:m-T),I(1:m-T))
-        call DGESV(m-T,m-T,tempATA(1:m-T,1:m-T),m-T,ordervec(1:m-T),tempITI(1:m-T,1:m-T),m-T,j)
-        u(I(1:(m-T))) = matmul(tempITI(1:m-T,1:m-T),tempvec(I(1:(m-T))))
+		tempITI(1:m-T) = tempvec(I(1:(m-T)))
+        call DGESV(m-T,1,tempATA(1:m-T,1:m-T),m-T,ordervec(1:m-T),tempITI(1:m-T),m-T,j)
+        u(I(1:(m-T)),k) = tempITI(1:m-T)
       end if
-      u(A(1:T)) = 0
-      call gtdymul(D,n,m,u,tempbeta)
+      u(A(1:T),k) = 0
+      call gtdymul(D,n,m,u(:,k),tempbeta)
       tempbeta = y - tempbeta
-      z = 0
+      z(:,k) = 0
       if(T .eq. 1)then
-        z(A(1)) = dot_product(D(A(1),:),tempbeta)
+        z(A(1),k) = dot_product(D(A(1),:),tempbeta)
       else
-        z(A(1:T)) = matmul(D(A(1:T),:),tempbeta)
+        z(A(1:T),k) = matmul(D(A(1:T),:),tempbeta)
       end if
 
       j = 1
       Do j = 1,m
         ordervec(j) = j
       end do
-      call Qsortorder(abs(z + u/rho),m,ordervec)
+      call Qsortorder(abs(z(:,k) + u(:,k)/rho),m,ordervec)
       A(1:T) = ordervec(1:T)
       Asort(1:T) = A(1:T)
       I(1:m-T) = ordervec((T+1):m)
+      if(adjust == 1 .and. T /= 1) then
+          call adjustA(Asort, I, abs(z(:,k) + u(:,k)/rho), adjust_max, T, delta, m)
+          A = Asort
+      else
+          if( T>1 )then
+              call qSortvec(Asort,T)
+          end if
+      end if 
 
-      if(T>1)call qSortvec(Asort(1:T),T)
       setequal = .TRUE.
       j = 1
       Do j = 1,T
@@ -707,6 +875,7 @@ subroutine agfusedl0(n, y, beta, z, u, tao, Kmax, L, eps, rho, miter, itermax, i
   end do
 
   Kmax = k - 1
+  !close(2)
   deallocate(tempvec,tempbeta,tempATA,tempITI,A,I,ordervec,Alast,Asort)
   return
 end
@@ -1486,6 +1655,186 @@ subroutine qsortorder(vec,nvec,ordervec)
 
     deallocate(tempvec)
     return
+end
+subroutine adjustA(A, I, vu, adjust_max, T, delta, nvec)
+
+  implicit none
+
+	integer, intent(in) :: adjust_max, T, delta, nvec
+	integer, dimension(T), intent(in out) :: A
+	real(kind = 8), dimension(nvec), intent(in) :: vu
+	integer, dimension(nvec - T), intent(in out) :: I
+
+  logical endmark
+	integer :: aj, sumA, sumI, k, j, tmp, tmp2, n_rm, mark, max_index, index
+	real(kind = 8) :: max_num, random
+
+  integer, dimension (:), allocatable :: Alast, dA, Akeep, existance, candidate
+
+  allocate(Alast(1:T))
+  allocate(dA(1:T-1))
+  allocate(Akeep(1:T))
+  allocate(existance(1:nvec))
+  allocate(candidate(1:nvec))
+	
+	Alast = A
+	I = 0
+	dA = 0
+	Akeep = 0
+	existance = 0
+	candidate = 0
+	sumA = 1
+	call qSortvec(A(1:T), T)
+	Akeep(1) = A(1)
+
+	Do k = 1, T-1
+      dA(k) = A(k+1) - A(k)
+		  if(dA(k) > delta) then
+		      sumA = sumA + 1
+		      Akeep(sumA) = A(k+1)
+	end if
+  end do
+	aj = 0
+ ! open(1, file='D:/data.txt', status='old') 
+
+	Do while(T-sumA /= 0 .and. aj < adjust_max)
+	    Do k = 1, sumA
+			    max_num = -1.0
+			    max_index = Akeep(k)
+			    tmp = Akeep(k) - delta
+          Do j = 1, 2*delta+1
+              tmp2 = tmp
+		          if(tmp < 1) then
+		              tmp2 = 1
+			        else if(tmp > nvec) then
+				          tmp2 = nvec
+			        end if
+			        if(vu(tmp2) > max_num) then
+				          max_num = vu(tmp2)
+					        max_index = tmp2
+			        end if
+			        tmp = tmp + 1
+		      end do
+			    Akeep(k) = max_index
+         ! write(1, *) Akeep(k)
+		    end do     
+ 
+		  Do k = 1, sumA
+		      tmp = Akeep(k) - delta
+		      Do j = 1, 2*delta+1
+              tmp2 = tmp
+			        if(tmp < 1) then
+		              tmp2 = 1
+		          else if(tmp > nvec) then
+				          tmp2 = nvec
+				      end if
+			        existance(tmp2) = 1		
+			        tmp = tmp + 1
+			    end do
+		  end do
+		  sumI = 0
+		  candidate = 0
+		  Do k = 1, nvec 
+		      if(existance(k) == 0) then
+			        sumI = sumI + 1
+			        candidate(sumI) = k		  
+			    end if
+		  end do
+
+		  n_rm = T - sumA
+		  mark = 0
+		  if(n_rm>0 .and. sumI>0) then
+		      Do k = 1, n_rm
+			        sumA = sumA + 1
+			        max_num = -1
+              Do j = 1, sumI
+                  if(vu(candidate(j))>max_num) then
+                	    max_num = vu(candidate(j))
+					            max_index = candidate(j)
+                      index = j
+				        	end if
+				      end do
+              ! write(1, *) index, sumI,candidate(index),candidate(sumI), sumA
+              if(index /= sumI) then
+                  candidate(index) = candidate(sumI)
+                 ! write(1, *) 1111, candidate(index),candidate(sumI), max_index, index
+              end if
+			        Akeep(sumA) = max_index
+			        sumI = sumI - 1
+			        if(sumI == 0)then
+                  EXIT
+              end if
+              tmp = max_index - delta
+		          Do j = 1, 2*delta+1
+                  tmp2 = tmp
+			            if(tmp < 1) then
+		                  tmp2 = 1
+		              else if(tmp > nvec) then
+				              tmp2 = nvec
+				          end if
+			            existance(tmp2) = 1		
+			            tmp = tmp + 1
+		  	      end do
+		          sumI = 0
+		          candidate = 0
+		          Do j = 1, nvec 
+		              if(existance(j) == 0) then
+			                sumI = sumI + 1
+			                candidate(sumI) = j	  
+			            end if
+		          end do		 
+		          if(sumI == 0)then
+                  EXIT
+              end if
+			    end do
+		    	if(sumA == T) then
+			        Do k = 1, T
+		              A(k) = Akeep(k)
+		          end do
+		      end if
+	  	end if
+		  call qSortvec(A(1:T), T)
+
+	  	endmark = .true.
+		  Do k = 1,T
+          if(Alast(k) /= A(k))then
+              endmark = .false.
+              EXIT
+          end if
+      end do
+      if(endmark)then
+          EXIT
+      else
+          Alast = A
+      end if
+      sumA = 1
+	    Akeep = 0
+	    Akeep(1) = A(1)
+	    Do k = 1,T-1
+          dA(k) = A(k+1) - A(k)
+		      if(dA(k) > delta) then
+		          sumA = sumA + 1
+		          Akeep(sumA) = A(k+1)
+		      end if
+      end do        
+      aj = aj + 1
+	end do
+	Do k = 1, nvec
+      existance(k) = 0
+  end do
+  Do k = 1, T
+      existance(A(k)) = 1	
+  end do
+	sumI = 0
+	Do k = 1, nvec
+	    if(existance(k) == 0) then
+		      sumI = sumI + 1
+          I(sumI)	= k
+      end if
+  end do
+ ! close(1)
+  deallocate(Alast, dA, Akeep, existance, candidate)
+  return
 end
 recursive subroutine qSortvec(vec,nvec)
 

@@ -7,9 +7,9 @@
   Generate D matrix which is used to do polynomial trend filtering of order k
 }
 \usage{
-   genDtf1d(k,n=NULL,full=FALSE)
-   genDtf2d(k,dim1=NULL,dim2=NULL,full=FALSE)
-   genD2d(dim1=NULL,dim2=NULL,full=FALSE)
+genDtf1d(k,n=NULL,full=FALSE)
+genDtf2d(k,dim1=NULL,dim2=NULL,full=FALSE)
+genD2d(dim1=NULL,dim2=NULL,full=FALSE)
 }
 \arguments{
   \item{k}{The order of polynomial trend filtering.}
@@ -29,9 +29,19 @@
   \item{vecctor}{Vector: return when full is FALSE, nozero elements in first row(equal to any other row) of D.}
   \item{matrix}{Matrix: return when full is TRUE, whole sparse D.}
 }
-\examples{
-  library(AMIAS)
 
-  genDtf1d(k=2)
-  genDtf1d(k=1,n=10,full=TRUE)
+\author{
+  Canhong Wen, Xueqin Wang, Shijie Quan, Zelin Hong and Aijun Zhang.
+  
+  Maintainer: Canhong Wen <wench@ustc.edu.cn>
+}
+\references{
+  Wen, C., Zhu, J., Wang, X., and Zhang, A. (2019) \emph{L0 trend filtering}, technique report.
+}
+
+
+\examples{
+
+  genDtf1d(k = 2)
+  genDtf1d(k = 1, n = 10, full = TRUE)
 }

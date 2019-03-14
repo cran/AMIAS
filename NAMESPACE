@@ -1,13 +1,21 @@
 useDynLib("AMIAS")
 importFrom(utils,head,tail,packageDescription)
-importFrom("graphics", "plot.default", "lines.default")
-importFrom("stats","model.matrix")
+importFrom("graphics", "plot.default", "lines.default", "abline", "lines", "matplot", "par", "points", "text")
+importFrom("stats","model.matrix", "dist", "rnorm")
+importFrom("grDevices", "rainbow")
 
 import("zoo")
 import("limSolve")
 import("Matrix")
 
-S3method(print,AMIAS.1d)
-S3method(plot,AMIAS.1d)
+S3method(plot, amias)
+S3method(plot, samias)
 
-export(AMIAS,plot.AMIAS.1d,AMIAS2d,my.rollmean,genDtf1d,genDtf2d,genD2d)
+S3method(print, amias)
+S3method(print, samias)
+
+
+S3method(coef, amias)
+S3method(coef, samias)
+
+export(amias, samias, SimuBlocks, SimuWave, SimuDoppler,my.rollmean, genDtf1d, genDtf2d, genD2d)
